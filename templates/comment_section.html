@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Profile</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="post">
+            <!-- 貼文內容 -->
+            <img src="{{ url_for('static', filename='sea.jpg') }}" alt="描述图片的文本">
+            <p> 2023/8/28 Eason:<p>
+            <p>The sun's embrace makes the sands glisten like gold, inviting toes to sink in. Waves, kissed by sunlight, create a soothing melody. Palm trees provide shade, their fronds swaying with the breeze. Snorkelers explore vibrant corals beneath, while sunsets paint the sky in hues of orange and pink.</p>
+        </div>
+        <div class="right_part">
+            <div class="comments">
+                <!-- 留言區內容 -->
+                {% for row in results %}
+                    <div class="comment">
+                        <img src="{{ url_for('static', filename='images22.jpg') }}" id="head_img">
+                        <div class="row_txt">
+                        <tr>
+                            <td>{{ row[1] }}</td>
+                            <td>: </td>
+                            <td>{{ row[2]}}</td>
+                            <td>{{ row[9] }}</td>
+                        </tr>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="comment-input" id="comment-form">
+                <form action="{{ url_for('submit_comment') }}" method="post">
+                <input name="comment" id="comment_input" type="text" placeholder="新增留言...">
+                <input type="hidden" name="user_name" value="{{ user_name }}">
+                <button value="Submit Comment">發佈</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

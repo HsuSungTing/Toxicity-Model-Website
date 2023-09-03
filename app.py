@@ -20,6 +20,8 @@ driver = '{ODBC Driver 17 for SQL Server}'
 
 hide_array=["OFF","OFF","OFF","OFF","OFF","OFF"]
 sort_btn = 'ON'  # 默认按钮状态
+hide_bool_array=[0,0,0,0,0,0]
+sort_btn_bool=0
 
 def prepare_model(input_comment):
     # Load the trained model
@@ -52,20 +54,26 @@ def execute_query(query):
     connection.close()
     return results
 
-def find_Admin_data():
+def find_Admin_data(): #從資料庫抓取現在狀態
     global sort_btn
     global hide_array
+    global hide_bool_array
+    global sort_btn_bool
     query = 'SELECT * FROM Admin_data'
     results = execute_query(query)
     if(int(results[0][1])==1):
         sort_btn="ON"
+        sort_btn_bool=1
     else:
         sort_btn='OFF'
+        sort_btn_bool=0
     for i in range(3,9):
         if(int(results[0][i])==1):
             hide_array[i-3]="ON"
+            hide_bool_array[i-3]=1
         else:
             hide_array[i-3]="OFF"
+            hide_bool_array[i-3]=0
 
 find_Admin_data()
 #建立local端的留言Table
@@ -77,10 +85,14 @@ def build_local_table():
     for y in range(len(results)):
         label_str="labels: "
         toxic_score=0
+        six_category_bool=[]
         for i in range(3,len(results[y])):
             if results[y][i]>=0.5:
                 label_str=label_str+map[i-3]+"+"
                 toxic_score=toxic_score+1
+                six_category_bool.append(1)
+            else:
+                six_category_bool.append(0)
         results[y] = list(results[y])  # 將pyodbc.Row轉換為列表
         if label_str[len(label_str)-1]=="+":
             label_str=label_str[:-1]
@@ -88,62 +100,97 @@ def build_local_table():
             label_str="labels: Great!!!"
         results[y].append(label_str)
         results[y].append(toxic_score)
-    return results
+        results[y].append(six_category_bool)
+    return results  #toxic_score在result[10]，#記錄所有屬性的list在result[11]
 
 @app.route('/') #這份code目前的邏輯是在/的.html拿到username和user_ID之後，#進入/login，再去資料庫確認是否有這筆資料
 def index():
     return render_template('login.html')
 
+def update_Admin_data(sort_btn_bool,hide_bool_array):
+    connection = connect_to_database()
+    cursor = connection.cursor()
+    update_query = f"UPDATE Admin_data SET sort_bool='{sort_btn_bool}', hide_toxic='{hide_bool_array[0]}', hide_severe='{hide_bool_array[1]}', hide_obscene='{hide_bool_array[2]}', hide_threat='{hide_bool_array[3]}', hide_insult='{hide_bool_array[4]}', hide_hate='{hide_bool_array[5]}' WHERE Admin_ID=1"
+    cursor.execute(update_query)
+    connection.commit()
+    cursor.close()
+    connection.close()    
+    
+def toggle_button_state(index): #i從0開始
+    i=index-1
+    global hide_array #把它變成全域變數
+    global hide_bool_array
+    global sort_btn_bool
+    button_name = f'button_{i + 1}'
+    button_state = request.form.get(button_name)
+    print("button_state",button_state)
+    if button_state == 'ON':
+        hide_array[i] = 'OFF'
+        hide_bool_array[i] = 0
+        print(f'button_{i + 1}', 'OFF')
+    else:
+        hide_array[i] = 'ON'
+        hide_bool_array[i] = 1
+        print(f'button_{i + 1}', 'ON')
+    
+    #寫入DB
+    update_Admin_data(sort_btn_bool,hide_bool_array)
+        
+#-----------------分別處理六個btn--------------
+@app.route('/toggle_button/<int:index>', methods=['POST'])
+def toggle_button(index):
+    toggle_button_state(index)
+    return redirect(url_for('show_stats'))
+
+
 @app.route('/show_stats', methods=['GET', 'POST'])
 def show_stats():
     query = 'SELECT * FROM user_data'
     results = execute_query(query)
-    global hide_array
+    global hide_bool_array
     global sort_btn
+    global sort_btn_bool
     
     if request.method == 'POST':
-        sort_bool = None
-        hide_bool_array = [0, 0, 0, 0, 0, 0]  # 初始化为0
-
         sort_btn_state = request.form.get('sort_btn_state')
-
         if sort_btn_state == 'ON':
             sort_btn = 'OFF'
-            sort_bool = 0
+            sort_btn_bool = 0
             print("sort_btn_state == 'ON'")
         else:
             sort_btn = 'ON'
-            sort_bool = 1
+            sort_btn_bool = 1
             print("sort_btn_state == 'OFF'")
-        for i in range(6):
-            button_name = f'button_{i + 1}'
-            button_state = request.form.get(button_name)
-            if button_state == 'ON':
-                hide_array[i] = 'OFF'
-                hide_bool_array[i] = 0
-                print(f'button_{i + 1}',"ON")
-            else:
-                hide_array[i] = 'ON'
-                hide_bool_array[i] = 1
-                print(f'button_{i + 1}',"OFF")
-        connection = connect_to_database()
-        cursor = connection.cursor()
-        # 在这里执行你的更新操作
-        update_query = f"UPDATE Admin_data SET sort_bool='{sort_bool}', hide_toxic='{hide_bool_array[0]}', hide_severe='{hide_bool_array[1]}', hide_obscene='{hide_bool_array[2]}', hide_threat='{hide_bool_array[3]}', hide_insult='{hide_bool_array[4]}', hide_hate='{hide_bool_array[5]}' WHERE Admin_ID=1"
-        cursor.execute(update_query)
-        connection.commit()
-        cursor.close()
-        connection.close()
+        
+        update_Admin_data(sort_btn_bool,hide_bool_array)
 
     return render_template('Admin_page.html', results=results, show_stats=True, show_preview=False, sort_btn=sort_btn, hide_array=hide_array)
+
 
 # 添加留言区预览的路由
 @app.route('/show_preview')
 def show_preview():
+    global sort_btn
+    global hide_array
     results=build_local_table()
+    remove_target=[]
+    ans=[]
+    for i in range(0,6):
+        if(hide_array[i]=="ON"):
+            for j in range(0,len(results)):
+                if results[j][11][i]==1:
+                    print("results[j][11][i]",results[j][11][i])
+                    remove_target.append(j)
+    for i in range(0,len(results)):
+        is_target_bool=0
+        for j in range(0,len(remove_target)):
+            if(i==remove_target[j]):
+                is_target_bool=1
+        if(is_target_bool==0):
+            ans.append(results[i])
     if(sort_btn=="ON"):
-        results = sorted(results,key=lambda x: x[10])
-    return render_template('Admin_page.html', show_preview=True,show_stats=False,results=results)
+        ans = sorted(ans,key=lambda x: x[10])
+    return render_template('Admin_page.html', show_preview=True,show_stats=False,results=ans)
 #------------------------------------------------------------------
 
 @app.route('/login', methods=['POST'])

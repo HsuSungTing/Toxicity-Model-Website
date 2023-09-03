@@ -1,0 +1,293 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    background-image: url("Social-Media-Blog-graphic.jpg");
+    background-repeat: no-repeat;
+  }
+  
+  .sidebar {
+    width: 300px;
+    background-color: rgba(1, 22, 39, 0.6);
+    color: white;
+    display: flex;
+    font-weight: bolder;
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .sidebar-header {
+    flex-wrap: wrap;
+    padding: 20px;
+    font-size: 40px;
+    text-align: left;
+  }
+  
+  .sidebar-content {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    /* background-color: rgba(0, 198, 248,0.4); */
+    height: 500px; 
+    flex-wrap: wrap;
+    flex-direction: column;
+    justify-content: center; /* 将内容垂直居中 */
+    justify-content: center; /* 将内容垂直居中 */
+}
+  
+.message {
+    background-color: rgba(246, 247, 247, 0.8);
+    color: rgb(0, 0, 0);
+    width: 250px;
+    padding: 10px;
+    margin: 30px 0px;
+    border-radius: 5px;
+    font-size: 15px;
+    font-weight: bolder;
+    border: rgba(0, 198, 248,0.4);
+    text-align: center;
+}
+  
+  .main-content {
+    flex-grow: 1;
+    padding: 20px;
+  }
+  
+  .chat-input {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+}
+
+/*-----------------------------*/
+/* 表格整体样式 */
+/* 表格整体样式 */
+.table {
+  width: 90%;
+  height: 60%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; 
+  /* background-color: rgba(246, 247, 247, 0.8); */
+  border-radius: 10px;
+}
+
+/* 表头行样式 */
+.comment.tr th {
+  background-color: rgba(171, 169, 169, 0.5);
+  /* border: 1px solid #ddd; */
+  padding: 8px;
+  text-align: center;
+}
+
+/* 数据行样式 */
+.row_txt td {
+  /* border: 1px solid #ddd; */
+  padding: 8px;
+  text-align: center;
+}
+
+/* 鼠标悬停时行高亮 */
+.row_txt:hover {
+  background-color: #f2f2f2;
+  text-align: center;
+}
+
+/* 表格宽度适应内容 */
+.table table {
+  position: relative;
+  top:40px;
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 10px;
+  text-align: center;
+}
+
+/* 用户名列对齐 */
+.row_txt td:first-child {
+  text-align: center;
+}
+
+/* 其他数据列对齐 */
+.row_txt td:not(:first-child) {
+  text-align: center;
+}
+
+/* 相间的灰白背景行 */
+.row_txt:nth-child(even) {
+  background-color: rgba(171, 169, 169, 0.5);
+}
+.row_txt:nth-child(odd) {
+  background-color: rgba(253, 253, 253, 0.5);
+}
+/*---------------------------------------------*/
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  display: flex;
+  /* justify-content: space-between; */
+  padding: 20px;
+  background-color: rgb(255, 255, 255);
+}
+
+.post {
+  width: 80%;
+  background-color: #f0f0f0;
+  padding: 20px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  height: 460px;
+  border-radius: 10px;
+}
+
+.post img {
+  max-width: 100%;
+}
+
+.comments {
+  /* width: 100%; */
+  background-color: #ffffff;
+  padding: 20px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  overflow-y: scroll;
+  max-height: 460px;
+  /*white-space: nowrap;*/ 
+}
+
+.comment_section {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+
+  /*white-space: nowrap;*/
+}
+
+.comment_section img {
+
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.comment_section p {
+  margin: 0;
+}
+
+.comment-input {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+}
+
+.comment-input input {
+  flex-grow: 1;
+  padding: 5px;
+  border: none;
+  border-radius: 5px;
+  width: 450px;
+  background-color: rgb(250, 250, 250);
+}
+
+.comment-input button {
+  background-color: #ffffff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+.right_part{
+  flex-wrap: wrap;
+  flex-direction: column;
+  margin-left: 20px;
+}
+#head_img{
+  width: 40px;
+  height: 40px;
+}
+.row_txt{
+  background-color: row_txt;
+  width: 80%;
+}
+.toxic_sort_div{
+  display: flex;
+  background-color: rgba(255, 255, 255,0.3);
+  flex-wrap: wrap;
+  flex-direction: row;
+  height: 40px;
+  width: 300px;
+  border: rgb(97, 93, 93) solid 1px;
+  border-radius: 5px;
+  font-weight: bolder;
+  text-align: center;
+  padding: 5px;
+}
+.toxic_sort_div p{
+  position: relative;
+  left: 50px;
+  top: -5px;
+}
+.toxic_sort_div button{
+  position: relative;
+  top: 10px;
+  left: 100px;
+}
+.sort_btn{
+  margin-left: 30px;
+}
+.big_div{
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+  background-color: rgba(249, 249, 249, 0.5);
+  width: 100%;
+  padding: 30px;
+  align-items: center;
+}
+.auto_hide_div{
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+  text-align: center;
+  border: rgb(90, 87, 87) 1px solid;
+  margin-top:10px;
+  border-radius: 10px;
+  background-color: rgba(250, 250, 250, 0.3);
+  width: 820px;
+}
+.auto_hide_div p{
+  font-weight: bolder;
+}
+/* .auto_hide_table{
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+} */
+.auto_hide_div table{
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 780;
+  margin: 10px;
+}
+.auto_hide_div td, th{
+  text-align: center;
+  padding: 8px;
+  width: 50px;
+}
+.auto_hide_div th{
+  /* background-color: rgba(8, 17, 1, 0.5); */
+  background-color: rgba(9, 19, 11, 0.5);
+  color: rgb(255, 255, 255);
+  font-weight: 300;
+}
+.auto_hide_div tr:nth-child(even) {
+  background-color: rgba(9, 19, 11, 0.5);
+  width: 50px;
+}
+
+

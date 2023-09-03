@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='Admin_style.css') }}">
+<title>ChatGPT-like Page</title>
+<script>
+    // JavaScript函数来切换按钮状态
+    function toggleButton(button) {
+        if (button.innerHTML === "ON") {
+            button.innerHTML = "OFF";
+        } else {
+            button.innerHTML = "ON";
+        }
+    }
+    
+    //-------------------------------
+    function toggleSortButton() {
+        var sortButton = document.getElementById("sort_btn");
+        if (sortButton.innerHTML === "ON") {
+            sortButton.innerHTML = "OFF";
+        } else {
+            sortButton.innerHTML = "ON";
+        }
+    }
+</script>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            Comment Management
+        </div>
+        <div class="sidebar-content">
+            <!-- Place your chat content here -->
+            <button class="message">毒性排序功能</button>
+            <button class="message">自動屏蔽有毒留言</button>
+            <a href="{{ url_for('show_stats') }}"><button class="message">觀眾留言統計</button></a>
+            <a href="{{ url_for('show_preview') }}"><button class="message">留言區預覽</button></a>
+        </div>
+    </div>
+    
+    {% if show_stats %}
+    <div class="big_div">
+        <div class="toxic_sort_div">
+            <p>毒性排序功能</p>
+            <form action="{{ url_for('show_stats') }}" method="POST">
+                <!--<input type="hidden" name="sort_btn_state"  value="{{sort_btn}}">-->
+                <button class="sort_btn" name="sort_btn_state" id="sort_btn" type="submit" value="{{sort_btn}}" >{{sort_btn}}</button>
+            </form>
+        </div>
+        <div class="auto_hide_div">
+            <table>
+                <p>自動隱藏設定</p>
+                <tr class="auto_hide_table">
+                    <th>toxic</th>
+                    <th>severe toxic </th>
+                    <th>obscene</th>
+                    <th>threat</th>
+                    <th>insult</th>
+                    <th>identity hate</th>
+                </tr>
+                <tr class="auto_hide_table">
+                    {% for row_bool in hide_array %}
+                    <form action="{{ url_for('toggle_button', index=loop.index) }}" method="POST">
+                        <td><button class="sort_btn2" type="submit" name="button_{{ loop.index }}"  value="{{row_bool}}" id="button_{{ loop.index }}" >{{ row_bool }}</button></td>
+                    </form>
+                    {% endfor %}
+                </tr>
+            </table>
+        </div>
+        <div class="table">
+            <table>
+                <thead>
+                    <tr class="comment tr">
+                        <th>user name</th>
+                        <th>toxic </th>
+                        <th>severe toxic </th>
+                        <th>obscene</th>
+                        <th>threat</th>
+                        <th>insult</th>
+                        <th>identity hate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                        <tr class="row_txt">
+                            <td>{{ row.user_name }}</td>
+                            <td>{{ row.toxic_ct }}</td>
+                            <td>{{ row.severe_toxic_ct }}</td>
+                            <td>{{ row.obscene_ct }}</td>
+                            <td>{{ row.threat_ct }}</td>
+                            <td>{{ row.insult_ct }}</td>
+                            <td>{{ row.identity_hate_ct }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if show_preview %}
+    <div class="container">
+        <div class="post">
+            <!-- 貼文內容 -->
+            <img src="{{ url_for('static', filename='sea.jpg') }}" alt="描述图片的文本">
+            <p> 2023/8/28 Eason:<p>
+            <p>The sun's embrace makes the sands glisten like gold, inviting toes to sink in. Waves, kissed by sunlight, create a soothing melody. Palm trees provide shade, their fronds swaying with the breeze. Snorkelers explore vibrant corals beneath, while sunsets paint the sky in hues of orange and pink. This beach is a tranquil haven where nature's artistry and serenity combine, offering a timeless escape from the world's hustle.</p>
+        </div>
+        <div class="right_part">
+            <div class="comments">
+                    <!-- 留言區內容 -->
+                {% for row in results %}
+                <div class="comment_section">
+                    <img src="{{ url_for('static', filename='images22.jpg') }}" id="head_img">
+                    <div class="row_txt">
+                    <tr>
+                    <td>{{ row[1] }}</td>
+                    <td>: </td>
+                    <td>{{ row[2]}}</td>
+                    <td>{{ row[9] }}</td>
+                    </tr>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Page</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='login_styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+</head>
+<body>
+
+<!--<button href="/Admin_page">Admin Login</button>-->
+<div id="Admin_div"><a href="/show_stats">Admin Login</a></div>
+    <form action="/login" method="POST">
+        <div id="login-form-wrap">
+            <h2>Login</h2>
+                <form id="login-form">
+                <p>
+                <input type="text" id="user_name" name="user_name"  placeholder="Username" required><i class="validation"><span></span><span></span></i>
+                </p>
+                <p>
+                <input type="text" id="user_id" name="user_id"  placeholder="Email Address" required><i class="validation"><span></span><span></span></i>
+                </p>
+                <p>
+                <input type="submit" value="Login">
+                </p>
+                </form>
+                <div id="create-account-wrap">
+                {% if login_failed %}
+                <p style="color: red;">Login failed</p>
+                {% endif %}
+                <p>Not a member? <a href="#">Create Account</a><p>
+            </div><!--create-account-wrap-->
+        </div><!--login-form-wrap-->
+    </form>
+</body>
+</html>
