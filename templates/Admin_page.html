@@ -42,12 +42,30 @@
     
     {% if show_stats %}
     <div class="big_div">
-        <div class="toxic_sort_div">
-            <p>毒性排序功能</p>
-            <form action="{{ url_for('show_stats') }}" method="POST">
-                <!--<input type="hidden" name="sort_btn_state"  value="{{sort_btn}}">-->
-                <button class="sort_btn" name="sort_btn_state" id="sort_btn" type="submit" value="{{sort_btn}}" >{{sort_btn}}</button>
-            </form>
+        <div class="first_row_div">
+            <div class="toxic_sort_div">
+                <p>毒性排序功能</p>
+                <form action="{{ url_for('show_stats') }}" method="POST">
+                    <!--<input type="hidden" name="sort_btn_state"  value="{{sort_btn}}">-->
+                    <button class="sort_btn" name="sort_btn_state" id="sort_btn" type="submit" value="{{sort_btn}}" >{{sort_btn}}</button>
+                </form>
+            </div>
+            <div class="block_user_div">
+                <form action="{{ url_for('block_user_router') }}" method="POST">
+                    <button name="block_user_state" id="block_user_btn" type="submit" value="{{block_user_btn}}">{{block_user_btn}}</button>
+                </form>    
+                <form action="{{ url_for('get_toxic_def') }}" method="POST">
+                    <div id="block_user_txt">
+                    <p>封鎖不良紀錄達</p>
+                    <input type="number" name="block_user_int" id="block_user_int" value="{{ default_block_user_int }}">
+                    <p>次的用戶</p>
+                    {% if block_user_btn=="ON" %}
+                        <button name="submit_btn" id="submit_btn" type="submit" >submit</button>
+                    {%endif%}
+                    </div>
+                </form>
+                <!--這邊一定需要value="{{block_user_btn}}"才能讓後端藉由requset知道現在按鈕的狀態-->
+            </div>
         </div>
         <div class="auto_hide_div">
             <table>
@@ -70,6 +88,7 @@
             </table>
         </div>
         <div class="table">
+            <p>觀眾違規次數統計</p>
             <table>
                 <thead>
                     <tr class="comment tr">
@@ -80,6 +99,7 @@
                         <th>threat</th>
                         <th>insult</th>
                         <th>identity hate</th>
+                        <th>Total</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -92,6 +112,7 @@
                             <td>{{ row.threat_ct }}</td>
                             <td>{{ row.insult_ct }}</td>
                             <td>{{ row.identity_hate_ct }}</td>
+                            <td>{{ row.total }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>

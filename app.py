@@ -19,9 +19,12 @@ password = '12345'
 driver = '{ODBC Driver 17 for SQL Server}'  
 
 hide_array=["OFF","OFF","OFF","OFF","OFF","OFF"]
-sort_btn = 'ON'  # 默认按钮状态
+sort_btn = 'OFF'  # 默认按钮状态
+block_user_btn="OFF"
 hide_bool_array=[0,0,0,0,0,0]
 sort_btn_bool=0
+block_user_bool=0
+block_threshold=0
 
 def prepare_model(input_comment):
     # Load the trained model
@@ -55,10 +58,10 @@ def execute_query(query):
     return results
 
 def find_Admin_data(): #從資料庫抓取現在狀態
-    global sort_btn
-    global hide_array
-    global hide_bool_array
-    global sort_btn_bool
+    global sort_btn,sort_btn_bool
+    global hide_array, hide_bool_array
+    global block_user_bool,block_user_btn
+    global block_threshold
     query = 'SELECT * FROM Admin_data'
     results = execute_query(query)
     if(int(results[0][1])==1):
@@ -74,7 +77,14 @@ def find_Admin_data(): #從資料庫抓取現在狀態
         else:
             hide_array[i-3]="OFF"
             hide_bool_array[i-3]=0
-
+    if(results[0][9]==1):
+        block_user_btn="ON"
+        block_user_bool=1
+    else:
+        block_user_btn="OFF"
+        block_user_bool=0
+    block_threshold=results[0][2]
+        
 find_Admin_data()
 #建立local端的留言Table
 def build_local_table():
@@ -107,10 +117,10 @@ def build_local_table():
 def index():
     return render_template('login.html')
 
-def update_Admin_data(sort_btn_bool,hide_bool_array):
+def update_Admin_data(sort_btn_bool,hide_bool_array,block_user_bool,block_threshold):
     connection = connect_to_database()
     cursor = connection.cursor()
-    update_query = f"UPDATE Admin_data SET sort_bool='{sort_btn_bool}', hide_toxic='{hide_bool_array[0]}', hide_severe='{hide_bool_array[1]}', hide_obscene='{hide_bool_array[2]}', hide_threat='{hide_bool_array[3]}', hide_insult='{hide_bool_array[4]}', hide_hate='{hide_bool_array[5]}' WHERE Admin_ID=1"
+    update_query = f"UPDATE Admin_data SET sort_bool='{sort_btn_bool}', hide_toxic='{hide_bool_array[0]}', hide_severe='{hide_bool_array[1]}', hide_obscene='{hide_bool_array[2]}', hide_threat='{hide_bool_array[3]}', hide_insult='{hide_bool_array[4]}', hide_hate='{hide_bool_array[5]}',block_user_bool='{block_user_bool}',toxic_def='{block_threshold}' WHERE Admin_ID=1"
     cursor.execute(update_query)
     connection.commit()
     cursor.close()
@@ -118,39 +128,63 @@ def update_Admin_data(sort_btn_bool,hide_bool_array):
     
 def toggle_button_state(index): #i從0開始
     i=index-1
-    global hide_array #把它變成全域變數
-    global hide_bool_array
+    global hide_array,hide_bool_array
     global sort_btn_bool
+    global block_user_bool
+    global block_threshold
     button_name = f'button_{i + 1}'
     button_state = request.form.get(button_name)
     print("button_state",button_state)
     if button_state == 'ON':
         hide_array[i] = 'OFF'
         hide_bool_array[i] = 0
-        print(f'button_{i + 1}', 'OFF')
+        # print(f'button_{i + 1}', 'OFF')
     else:
         hide_array[i] = 'ON'
         hide_bool_array[i] = 1
-        print(f'button_{i + 1}', 'ON')
+        # print(f'button_{i + 1}', 'ON')
     
     #寫入DB
-    update_Admin_data(sort_btn_bool,hide_bool_array)
+    update_Admin_data(sort_btn_bool,hide_bool_array,block_user_bool,block_threshold)
         
 #-----------------分別處理六個btn--------------
 @app.route('/toggle_button/<int:index>', methods=['POST'])
 def toggle_button(index):
     toggle_button_state(index)
     return redirect(url_for('show_stats'))
-
+#處理是否要封鎖不良使用者的按鈕
+@app.route('/block_user_router', methods=['POST'])
+def block_user_router():
+    global hide_bool_array
+    global sort_btn_bool
+    global block_user_bool,block_user_btn      #string
+    global block_threshold
+    button_state = request.form.get("block_user_state")
+    if button_state == 'ON':
+        block_user_btn = 'OFF'
+        block_user_bool = 0
+    else:
+        block_user_btn  = 'ON'
+        block_user_bool = 1
+    #寫入DB
+    update_Admin_data(sort_btn_bool,hide_bool_array,block_user_bool,block_threshold)
+    return redirect(url_for('show_stats'))
+@app.route('/get_toxic_def', methods=['POST'])
+def get_toxic_def():
+    global sort_btn_bool,hide_bool_array,block_user_bool,block_threshold
+    block_threshold=int(request.form.get("block_user_int")) #從前端抓取
+    print("toxic_def:",block_threshold)
+    update_Admin_data(sort_btn_bool,hide_bool_array,block_user_bool,block_threshold)
+    return redirect(url_for('show_stats'))
 
 @app.route('/show_stats', methods=['GET', 'POST'])
 def show_stats():
     query = 'SELECT * FROM user_data'
     results = execute_query(query)
-    global hide_bool_array
-    global sort_btn
-    global sort_btn_bool
-    
+    global hide_bool_array #把字串傳給前端
+    global sort_btn,sort_btn_bool #唯一在這邊需要改動的bool
+    global block_user_btn ,block_user_bool
+    global block_threshold
     if request.method == 'POST':
         sort_btn_state = request.form.get('sort_btn_state')
         if sort_btn_state == 'ON':
@@ -162,10 +196,9 @@ def show_stats():
             sort_btn_bool = 1
             print("sort_btn_state == 'OFF'")
         
-        update_Admin_data(sort_btn_bool,hide_bool_array)
+        update_Admin_data(sort_btn_bool,hide_bool_array,block_user_bool,block_threshold)
 
-    return render_template('Admin_page.html', results=results, show_stats=True, show_preview=False, sort_btn=sort_btn, hide_array=hide_array)
-
+    return render_template('Admin_page.html', results=results, show_stats=True, show_preview=False, sort_btn=sort_btn, hide_array=hide_array,block_user_btn=block_user_btn,default_block_user_int=block_threshold)
 
 # 添加留言区预览的路由
 @app.route('/show_preview')
@@ -196,13 +229,15 @@ def show_preview():
 @app.route('/login', methods=['POST'])
 def login():
     if request.method == 'POST':
+        global block_threshold
+        global block_user_bool
         user_name = request.form['user_name'] #從前端拿取資料
         user_id= request.form['user_id']
         # 查询数据库是否存在匹配的用户
         query = f"SELECT * FROM user_data WHERE user_name='{user_name}' AND user_ID='{user_id}'"
         results = execute_query(query)
-
-        if len(results) > 0:
+        print(results)
+        if( len(results) > 0 and block_threshold>results[0][8] and block_user_bool==1):
             # return f"Login successful for user: {user_name}"
             return redirect(url_for('comment_section', user_name=user_name))
         else:
@@ -234,13 +269,15 @@ def submit_comment():
         insert_query = f"INSERT INTO comment_data (comment_ID,user_name, comment,toxic_prob,severe_toxic_prob,obscene_prob,threat_prob,insult_prob,identity_hate_prob) VALUES ('{comment_ID}','{user_name}', '{comment}', '{result_ary[0][0]}', '{result_ary[0][1]}', '{result_ary[0][2]}','{result_ary[0][3]}','{result_ary[0][4]}','{result_ary[0][5]}')"
         cursor.execute(insert_query)
         #------------------------------------------------
+        violation_ct=0
         toxic_bool_ary=[]
         for x in result_ary[0]:
             if(x>=0.5):
                 toxic_bool_ary.append(1)
+                violation_ct=violation_ct+1
             else:
                 toxic_bool_ary.append(0)
-        update_query = f"UPDATE user_data SET toxic_ct = toxic_ct+'{ toxic_bool_ary[0]}', severe_toxic_ct = severe_toxic_ct+'{ toxic_bool_ary[1]}', obscene_ct = obscene_ct+'{ toxic_bool_ary[2]}',threat_ct = threat_ct+'{ toxic_bool_ary[3]}',insult_ct = insult_ct+'{ toxic_bool_ary[4]}',identity_hate_ct=identity_hate_ct+'{ toxic_bool_ary[5]}'  WHERE user_name = '{user_name}'"
+        update_query = f"UPDATE user_data SET toxic_ct = toxic_ct+'{ toxic_bool_ary[0]}', severe_toxic_ct = severe_toxic_ct+'{ toxic_bool_ary[1]}', obscene_ct = obscene_ct+'{ toxic_bool_ary[2]}',threat_ct = threat_ct+'{ toxic_bool_ary[3]}',insult_ct = insult_ct+'{ toxic_bool_ary[4]}',identity_hate_ct=identity_hate_ct+'{ toxic_bool_ary[5]}',total=total+'{violation_ct}'  WHERE user_name = '{user_name}'"
         cursor.execute(update_query)
         connection.commit()
         cursor.close()

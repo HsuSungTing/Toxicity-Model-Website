@@ -62,21 +62,29 @@ body {
 /* 表格整体样式 */
 /* 表格整体样式 */
 .table {
-  width: 90%;
+  width: 880px;
   height: 60%;
   display: flex;
   flex-wrap: wrap;
   justify-content: center; 
   /* background-color: rgba(246, 247, 247, 0.8); */
   border-radius: 10px;
+  background-color: rgba(250, 250, 250, 0.3);
+  position: relative;
+  top:40px;
+  border: rgb(90, 87, 87) 1px solid;
 }
-
+.table p{
+  font-weight: bolder;
+}
 /* 表头行样式 */
 .comment.tr th {
-  background-color: rgba(171, 169, 169, 0.5);
+  background-color: rgba(9, 19, 11, 0.5);
   /* border: 1px solid #ddd; */
   padding: 8px;
   text-align: center;
+  color: white;
+  font-weight: 300;
 }
 
 /* 数据行样式 */
@@ -94,9 +102,10 @@ body {
 
 /* 表格宽度适应内容 */
 .table table {
+  margin: 10px;
+  width: 855px;
   position: relative;
-  top:40px;
-  width: 100%;
+  top: -10px;
   border-collapse: collapse;
   border-radius: 10px;
   text-align: center;
@@ -114,10 +123,14 @@ body {
 
 /* 相间的灰白背景行 */
 .row_txt:nth-child(even) {
-  background-color: rgba(171, 169, 169, 0.5);
+  background-color: rgba(9, 19, 11, 0.5);
+  color: white;
+  font-weight: 300;
 }
 .row_txt:nth-child(odd) {
-  background-color: rgba(253, 253, 253, 0.5);
+  background-color: rgba(9, 19, 11, 0.5);
+  color: white;
+  font-weight: 300;
 }
 /*---------------------------------------------*/
 body {
@@ -210,9 +223,10 @@ body {
   width: 40px;
   height: 40px;
 }
-.row_txt{
-  background-color: row_txt;
-  width: 80%;
+.first_row_div{
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
 }
 .toxic_sort_div{
   display: flex;
@@ -220,7 +234,7 @@ body {
   flex-wrap: wrap;
   flex-direction: row;
   height: 40px;
-  width: 300px;
+  width: 360px;
   border: rgb(97, 93, 93) solid 1px;
   border-radius: 5px;
   font-weight: bolder;
@@ -236,6 +250,49 @@ body {
   position: relative;
   top: 10px;
   left: 100px;
+}
+.block_user_div{
+  display: flex;
+  background-color: rgba(255, 255, 255,0.3);
+  flex-wrap: wrap;
+  flex-direction: row;
+  height: 40px;
+  width: 465px;
+  border: rgb(97, 93, 93) solid 1px;
+  border-radius: 5px;
+  font-weight: bolder;
+  text-align: center;
+  padding: 5px;
+  margin-left: 30px;
+}
+#block_user_txt{
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+}
+.block_user_div input{
+  width: 30px;
+  height: 20px;
+  position: relative;
+  top: 10px;
+  /* left: 6px; */
+}
+.block_user_div p{
+  position: relative;
+  /* left: 5px; */
+  top: -5px;
+}
+#block_user_btn{
+  position: relative;
+  left: 350px;
+  top: 12px;
+  height: 20px;
+}
+#submit_btn{
+  position: relative;
+  left: 50px;
+  top: 12px;
+  height: 20px;
 }
 .sort_btn{
   margin-left: 30px;
@@ -258,7 +315,7 @@ body {
   margin-top:10px;
   border-radius: 10px;
   background-color: rgba(250, 250, 250, 0.3);
-  width: 820px;
+  width: 880px;
 }
 .auto_hide_div p{
   font-weight: bolder;
@@ -271,7 +328,7 @@ body {
 .auto_hide_div table{
   font-family: arial, sans-serif;
   border-collapse: collapse;
-  width: 780;
+  width: 840;
   margin: 10px;
 }
 .auto_hide_div td, th{
