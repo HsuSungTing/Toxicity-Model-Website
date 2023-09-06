@@ -33,7 +33,9 @@ body {
     justify-content: center; /* 将内容垂直居中 */
     justify-content: center; /* 将内容垂直居中 */
 }
-  
+.row_txt_2{
+  width: 250px;
+}
 .message {
     background-color: rgba(246, 247, 247, 0.8);
     color: rgb(0, 0, 0);
@@ -290,7 +292,7 @@ body {
 }
 #submit_btn{
   position: relative;
-  left: 50px;
+  left: 40px;
   top: 12px;
   height: 20px;
 }

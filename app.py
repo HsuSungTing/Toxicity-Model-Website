@@ -200,14 +200,9 @@ def show_stats():
 
     return render_template('Admin_page.html', results=results, show_stats=True, show_preview=False, sort_btn=sort_btn, hide_array=hide_array,block_user_btn=block_user_btn,default_block_user_int=block_threshold)
 
-# 添加留言区预览的路由
-@app.route('/show_preview')
-def show_preview():
-    global sort_btn
-    global hide_array
-    results=build_local_table()
-    remove_target=[]
+def remove_toxic_comment(hide_array,results):
     ans=[]
+    remove_target=[]
     for i in range(0,6):
         if(hide_array[i]=="ON"):
             for j in range(0,len(results)):
@@ -221,6 +216,15 @@ def show_preview():
                 is_target_bool=1
         if(is_target_bool==0):
             ans.append(results[i])
+    return ans       
+#------------------------------------------------
+# 添加留言区预览的路由
+@app.route('/show_preview')
+def show_preview():
+    global sort_btn
+    global hide_array
+    results=build_local_table()
+    ans=remove_toxic_comment(hide_array,results)
     if(sort_btn=="ON"):
         ans = sorted(ans,key=lambda x: x[10])
     return render_template('Admin_page.html', show_preview=True,show_stats=False,results=ans)
@@ -231,13 +235,14 @@ def login():
     if request.method == 'POST':
         global block_threshold
         global block_user_bool
+        print("block_threshold,block_user_bool",block_threshold,block_user_bool)
         user_name = request.form['user_name'] #從前端拿取資料
         user_id= request.form['user_id']
         # 查询数据库是否存在匹配的用户
         query = f"SELECT * FROM user_data WHERE user_name='{user_name}' AND user_ID='{user_id}'"
         results = execute_query(query)
         print(results)
-        if( len(results) > 0 and block_threshold>results[0][8] and block_user_bool==1):
+        if( (len(results) > 0 and block_threshold>results[0][8]) or (len(results) > 0 and block_user_bool==0)):
             # return f"Login successful for user: {user_name}"
             return redirect(url_for('comment_section', user_name=user_name))
         else:
@@ -246,9 +251,13 @@ def login():
 # 新增一个新的路由来显示用户信息和评论区
 @app.route('/profile/<user_name>')
 def comment_section(user_name):
+    global hide_array
     results=build_local_table()
-    results = sorted(results,key=lambda x: x[10])
-    return render_template('comment_section.html', user_name=user_name, results=results)
+    ans=remove_toxic_comment(hide_array,results)
+    global sort_btn_bool
+    if(sort_btn_bool==1):
+        results = sorted(results,key=lambda x: x[10])
+    return render_template('comment_section.html', user_name=user_name, results=ans)
 
 @app.route('/submit_comment', methods=['POST'])#建立user_data
 def submit_comment():
