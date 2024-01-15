@@ -2,52 +2,57 @@ from flask import Flask, render_template, request,redirect, url_for,session
 import pyodbc
 import os
 import tensorflow as tf
-from tensorflow.keras.models import load_model
-from tensorflow.keras.layers import TextVectorization
+import torch
+from transformers import BertTokenizer, BertForSequenceClassification
+from torch.utils.data import DataLoader, TensorDataset
 import pandas as pd
 import numpy as np
 
 
 app = Flask(__name__)
-# app.secret_key = 'your_secret_key_here'  # 替换为随机生成的密钥
 
-# SQL Server连接配置
+# SQL Server connection
 server = 'LAPTOP-Q69P3FAE\\MSSQLSERVER01'
 database = 'user_DB'
 username = 'sa'
 password = '12345'
 driver = '{ODBC Driver 17 for SQL Server}'  
-
+#initailize global value
 hide_array=["OFF","OFF","OFF","OFF","OFF","OFF"]
-sort_btn = 'OFF'  # 默认按钮状态
+sort_btn = 'OFF'  
 block_user_btn="OFF"
 hide_bool_array=[0,0,0,0,0,0]
 sort_btn_bool=0
 block_user_bool=0
 block_threshold=0
 
-def prepare_model(input_comment):
-    # Load the trained model
-    model_path = "./model2.h5"
-    model = load_model(model_path)
-    # Load the text vectorizer
-    vectorizer = TextVectorization(max_tokens=200000, output_sequence_length=1800, output_mode='int')
-    df = pd.read_csv(os.path.join('jigsaw-toxic-comment-classification-challenge','train.csv', 'train.csv'))
+model_name =".\saved_model"
+device = torch.device('cpu')
+Bert_Tokenizer = BertTokenizer.from_pretrained(model_name)
+Bert_Model = BertForSequenceClassification.from_pretrained(model_name).to(device)
 
-    X = df['comment_text'] #只抓文字留言搭配ID
-    y = df.iloc[:, 2:]#只抓各種label搭配ID
-    vectorizer.adapt(X.values)
-    data = input_comment
-    input_text = vectorizer([data])
-    prediction = model.predict(np.array(input_text))
-    return prediction
+def prepare_model(input_text, model=Bert_Model, tokenizer=Bert_Tokenizer,device=device):
+    user_input = [input_text]
+    user_encodings = tokenizer(user_input, truncation=True, padding=True, return_tensors="pt")
+    user_dataset = TensorDataset(user_encodings['input_ids'], user_encodings['attention_mask'])
+    user_loader = DataLoader(user_dataset, batch_size=1, shuffle=False)
+    model.eval()
+    with torch.no_grad():
+        for batch in user_loader:
+            input_ids, attention_mask = [t.to(device) for t in batch]
+            outputs = model(input_ids, attention_mask=attention_mask)
+            logits = outputs.logits
+            predictions = torch.sigmoid(logits)
 
-# -------------连接到数据库-------------------
+    predicted_labels = (predictions.cpu().numpy() > 0.5).astype(int)
+    return predicted_labels[0].tolist()
+
+# ------------連接到database-------------------
 def connect_to_database():
     connection = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}')
     return connection
 
-# 执行查询并返回结果
+# 反覆被呼叫的query function
 def execute_query(query):
     connection = connect_to_database()
     cursor = connection.cursor()
@@ -86,6 +91,7 @@ def find_Admin_data(): #從資料庫抓取現在狀態
     block_threshold=results[0][2]
         
 find_Admin_data()
+
 #建立local端的留言Table
 def build_local_table():
     query = 'SELECT * FROM comment_data'
@@ -152,6 +158,7 @@ def toggle_button_state(index): #i從0開始
 def toggle_button(index):
     toggle_button_state(index)
     return redirect(url_for('show_stats'))
+
 #處理是否要封鎖不良使用者的按鈕
 @app.route('/block_user_router', methods=['POST'])
 def block_user_router():
@@ -169,6 +176,7 @@ def block_user_router():
     #寫入DB
     update_Admin_data(sort_btn_bool,hide_bool_array,block_user_bool,block_threshold)
     return redirect(url_for('show_stats'))
+
 @app.route('/get_toxic_def', methods=['POST'])
 def get_toxic_def():
     global sort_btn_bool,hide_bool_array,block_user_bool,block_threshold
@@ -195,9 +203,7 @@ def show_stats():
             sort_btn = 'ON'
             sort_btn_bool = 1
             print("sort_btn_state == 'OFF'")
-        
         update_Admin_data(sort_btn_bool,hide_bool_array,block_user_bool,block_threshold)
-
     return render_template('Admin_page.html', results=results, show_stats=True, show_preview=False, sort_btn=sort_btn, hide_array=hide_array,block_user_btn=block_user_btn,default_block_user_int=block_threshold)
 
 def remove_toxic_comment(hide_array,results):
@@ -217,8 +223,8 @@ def remove_toxic_comment(hide_array,results):
         if(is_target_bool==0):
             ans.append(results[i])
     return ans       
-#------------------------------------------------
-# 添加留言区预览的路由
+
+#在Admin_page.html顯示留言區的路由
 @app.route('/show_preview')
 def show_preview():
     global sort_btn
@@ -248,7 +254,7 @@ def login():
         else:
             return render_template('login.html', login_failed=True)
 
-# 新增一个新的路由来显示用户信息和评论区
+#負責顯示留言區(在comment_section.html)
 @app.route('/profile/<user_name>')
 def comment_section(user_name):
     global hide_array
@@ -264,23 +270,23 @@ def submit_comment():
     if request.method == 'POST':
         user_name = request.form['user_name']
         comment = request.form['comment']
+        comment =comment.replace("'", "")
         #------------------------------
         query = f"SELECT COUNT(*) FROM comment_data "
         results = execute_query(query)
         comment_ID = int(results[0][0])+1  
         #----------------------------------------------
-        result_ary=prepare_model(comment)
-        
+        result_ary=prepare_model(comment,Bert_Model,Bert_Tokenizer,device)
         # 插入留言以及攻擊性機率到数据库
         connection = connect_to_database()
         cursor = connection.cursor()
-        #----------------------------------------------
-        insert_query = f"INSERT INTO comment_data (comment_ID,user_name, comment,toxic_prob,severe_toxic_prob,obscene_prob,threat_prob,insult_prob,identity_hate_prob) VALUES ('{comment_ID}','{user_name}', '{comment}', '{result_ary[0][0]}', '{result_ary[0][1]}', '{result_ary[0][2]}','{result_ary[0][3]}','{result_ary[0][4]}','{result_ary[0][5]}')"
+        #----------------------------------------------   
+        insert_query = f"INSERT INTO comment_data (comment_ID,user_name, comment,toxic_prob,severe_toxic_prob,obscene_prob,threat_prob,insult_prob,identity_hate_prob) VALUES ('{comment_ID}','{user_name}', '{comment}', '{result_ary[0]}', '{result_ary[1]}', '{result_ary[2]}','{result_ary[3]}','{result_ary[4]}','{result_ary[5]}')"
         cursor.execute(insert_query)
         #------------------------------------------------
         violation_ct=0
         toxic_bool_ary=[]
-        for x in result_ary[0]:
+        for x in result_ary:
             if(x>=0.5):
                 toxic_bool_ary.append(1)
                 violation_ct=violation_ct+1
